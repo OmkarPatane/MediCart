@@ -5,14 +5,25 @@ const MedicineRouter=express.Router()
 
 
 
-MedicineRouter.get("/",async(req,res)=>{
+MedicineRouter.get("/", async (req, res) => {
     try {
-        const medicines=await Medicine.find()
-        res.status(200).json(medicines)
+        const { search, page = 1, limit = 10 } = req.query;
+
+        let query = {};
+
+        if (search) {
+            query.name = { $regex: search, $options: "i" }; // Case-insensitive search
+        }
+
+        const medicines = await Medicine.find(query)
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        res.status(200).json(medicines);
     } catch (error) {
-        res.status(500).json({message:"Error while fetching medicines",error})
+        res.status(500).json({ message: "Error while fetching medicines", error });
     }
-})
+});
 
 MedicineRouter.post("/add", authenticate, async (req, res) => {
     try {
